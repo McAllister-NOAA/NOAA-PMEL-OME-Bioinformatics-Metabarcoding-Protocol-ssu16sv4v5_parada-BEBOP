@@ -27,7 +27,9 @@ maturity level: demonstrated
 # FAIRe terms
 sop_bioinformatics: TBD_this_DOI (paste link when published)
 checkls_ver: TBD_bioinformatics_template
-assay_name: 'ssu16sv4v5_parada | ssu16sv4v5_parada_OSUmod'
+assay_name:
+   - ssu16sv4v5_parada
+   - ssu16sv4v5_parada_OSUmod
 pcr_primer_forward: GTGYCAGCMGCCGCGGTAA
 pcr_primer_reverse: CCGYCAATTYMTTTRAGTTT
 trim_method: 'Cutadapt, primer trimming | DADA2, filterAndTrim (quality and length trimming)'
