@@ -245,18 +245,22 @@ This is a list of other protocols that are not in your folder which should be kn
 | 18Sv4 | 18S ribosomal nucleic acid V4 gene region |
 | 18Sv9 | 18S ribosomal nucleic acid V9 gene region |
 | ASV | Amplicon Sequencing Variant |
+| BLAST | Basic Local Alignment Search Tool |
 | CICOES | Cooperative Institute for Climate, Ocean, and Ecosystem Studies |
 | COI | Cytochrome c oxidase subunit I gene region |
 | ITS1 | Internal Transcribed Spacer 1 region |
+| IUPAC | Content Cell |
+| NCBI | National Center for Biotechnology Information |
 | NOAA | National Oceanographic and Atmospheric Administration |
 | PMEL | Pacific Marine Environmental Laboratory |
+| REVAMP | Rapid Exploration and Visualization through an Automated Metabarcoding Pipeline |
 | UW | University of Washington |
 
 ### GLOSSARY
 
 | SPECIALISED TERM | DEFINITION |
 | ------------- | ------------- |
-| Content Cell  | Content Cell  |
+| SILVA  | Content Cell  |
 | Content Cell  | Content Cell  |
 
 ## BACKGROUND
@@ -279,7 +283,7 @@ Data is run through this standard operating procedure at the sequencing run leve
 
 ### Raw Data Download and QA/QC
 
-Raw reads (fastq.gz) are provided by the sequencing center demultiplexed by sample and marker (see sequencing center BeBops listed in RELATED PROTOCOLS). Demultiplexing is done in two stages, depending on whether or not any sample•marker pair shares the same Illumina index. If all sample•marker pairs have a unique index, then demultiplexing is completed using pheniqs v2.1.0 only, with 0 allowed mismatches. If samples have unique indices, but markers do not, then first samples are separated with pheniqs v2.1.0 (0 mismatch), followed by marker separation using Cutadapt v3.4 (loose 30% allowed mismatch to primer; primer kept for a second more strict matching later in the workflow). On downloading reads to the local compute infrastructure, fidelity of the downloaded file is checked via a `md5sum` check. Md5s are either supplied by the sequencing center with the original download (fastq.gz.md5) or are provided separately.
+Raw reads (fastq.gz) are provided by the sequencing center demultiplexed by sample and marker (see sequencing center BeBops listed in RELATED PROTOCOLS). Demultiplexing is done in two stages, depending on whether or not any sample•marker pair share the same Illumina index. If all sample•marker pairs have a unique index, then demultiplexing is completed using pheniqs v2.1.0 only, with 0 allowed mismatches. If samples have unique indices, but markers do not, then first samples are separated with pheniqs v2.1.0 (0 mismatch), followed by marker separation using Cutadapt v3.4 (loose 30% allowed mismatch to primer; primer kept for a second more strict matching later in the workflow). On downloading reads to the local compute infrastructure, fidelity of the downloaded file is checked via a `md5sum` check. Md5s are either supplied by the sequencing center with the original download (fastq.gz.md5) or are provided separately.
 
 To check the quality of the sequencing run, [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) is run on all fastq files (`~/path/to/FastQC/fastqc -o fastqc -t 10 *gz`). In addition for checking the run for a number of quality statistics, the "Per base sequence quality" is used to determine the best cutoff for the `dada_trimRight` (number of bases to trim from right or end of sequence) and `dada_trimLeft` (number of bases to trim from the left or start of sequence) parameters for the REVAMP configuration file.
 
@@ -309,9 +313,9 @@ At a bare minimum, REVAMP requires as input:
       * `dada_maxEE2`: Maximum number of expected errors in reverse read.
       * `dada_trimRight`: Number of bp to trim from the right of the reads. Highly variable and based on sequencing run quality. Check FastQC results.
       * `dada_trimLeft`: Number of bp to trim from the left of the reads. Usually unnecessary (i.e. 0), but check FastQC results.
-      * `blastMode`: Either `allIN`, `mostEnvOUT`, or `allEnvOUT`, refering to entries in the nt database that are kepth or discarded when labelled with controlled unknown/unclassified vocabulary (see [ncbi_db_cleanup.sh](https://github.com/McAllister-NOAA/REVAMP/blob/main/ncbi_db_cleanup.sh)). Recommended: `mostEnvOUT`.
+      * `blastMode`: Either `allIN`, `mostEnvOUT`, or `allEnvOUT`, referring to entries in the nt database that are kepth or discarded when labelled with controlled unknown/unclassified vocabulary (see [ncbi_db_cleanup.sh](https://github.com/McAllister-NOAA/REVAMP/blob/main/ncbi_db_cleanup.sh)). Recommended: `mostEnvOUT`.
  * [figure configuration file](https://github.com/McAllister-NOAA/REVAMP?tab=readme-ov-file#figure-configuration-file--f):
-    * See REVAMP readme. Not pertinant to bioinformatic processing.
+    * See REVAMP readme. Not pertinent to bioinformatic processing.
 
 REVAMP uses BLASTn against NCBI's nt database for taxonomic assignment. To run BLASTn, the nt database must be downloaded and prepared for use with REVAMP. This can be done using the shell script [ncbi_db_cleanup.sh](https://github.com/McAllister-NOAA/REVAMP/blob/main/ncbi_db_cleanup.sh) or by running each individual step from the script in the command terminal. Since the nt database is not version controlled, it is imperitive that the date of download is recorded to know the compatibility and relationship of different BLASTn runs. OME uses the same nt database download for the BLASTn for all markers on at least the same sequencing run.
 
@@ -371,7 +375,7 @@ A summary of the SILVAngs pipeline and OME use of it:
 * REVAMP will skip the BLASTn steps and instead prompt the user for the SILVAngs output and SILVA taxonomy files:
    * `Enter the location of the SILVAngs ssu or lsu results directory (i.e. ~/Downloads/results/ssu)`. This is simply the path to the results archive `ssu` folder.
    * `Enter the location of the reference taxonomy map for current SILVA database: i.e. tax_slv_ssu_138.1.txt`. This file can be downloaded from arb-silva [here](https://www.arb-silva.de/current-release/Exports/taxonomy).
-* REVAMP will output the necessary ASV taxonomy file, based on the SILVA taxonomy hierarchy and simplified to seven levels only (`K/P/C/O/F/G/S`). Note: All species level assignments in this file are `NA`.
+* REVAMP will output the necessary ASV taxonomy file, based on the SILVA taxonomy hierarchy and simplify to seven levels only (`K/P/C/O/F/G/S`). Note: All species level assignments in this file are `NA`.
 
 ##### Troubleshooting
 There is a rare designation in the SILVAngs output that sets the taxonomy assignment to `silva||0|`. This entry does not exist in the silva taxonomy database, and is meant to indicate an unassigned/unknown hit. However, REVAMP cannot yet deal with this issue (user will see perl error `Use of uninitialized value`), and it is necessary to replace `silva||0|` with `Unknown` in the `results/ssu/exports/x---ssu---otus.csv` file. Note that the assignment `ncbi||0|` in the same line should also be replaced with `Unknown`.
@@ -546,7 +550,7 @@ After they are used in steps 2 and 3, the positive and negative control samples 
 
 **Step 5 – Remove known contaminants and off-targets [ASV]**
 
-There are a number of typical contaminants that may make their way into envrionmental samples, particularly for low DNA applications of eDNA metabarcoding. These can include DNA from the humans processing the samples, food items (particularly meats), pets (dogs, cats, etc.), and lab controls (gblocks for positive controls, positive controls from other experiments). In addition, some markers were "designed" to target particular taxa, but may in fact amplify other organisms that were not originally intended as the target. This step allows users to designate known contaminants and off-targets to remove them from the data.
+There are a number of typical contaminants that may make their way into environmental samples, particularly for low DNA applications of eDNA metabarcoding. These can include DNA from the humans processing the samples, food items (particularly meats), pets (dogs, cats, etc.), and lab controls (gblocks for positive controls, positive controls from other experiments). In addition, some markers were "designed" to target particular taxa, but may in fact amplify other organisms that were not originally intended as the target. This step allows users to designate known contaminants and off-targets to remove them from the data.
 
 Users can supply a list of typical lab contaminant taxonomies (one per line), which should include the potential for incomplete taxonomic assignment of the contaminant in the current dataset. Users can also supply the sequence of contaminants for direct removal of matching ASVs (independent of taxonomy). This latter is useful for removing the sequences of synthetic controls, which may or may not be assigned to the appropriate taxonomy in a traditional workflow.
 
